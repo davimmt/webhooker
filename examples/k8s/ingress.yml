@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    kubernetes.io/ingress.class: kong
+  name: webhooker
+  namespace: argocd
+spec:
+   rules:
+   - host: webhooker.example.corp
+     http:
+       paths:
+       - backend:
+           service:
+             name: webhooker
+             port:
+               name: http
+         path: /
+         pathType: Prefix

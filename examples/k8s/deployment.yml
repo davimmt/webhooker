@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhooker
+  namespace: argocd
+  labels:
+    application: webhooker
+    component: webserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      application: webhooker
+      component: webserver
+  template:
+    metadata:
+      labels:
+        application: webhooker
+        component: webserver
+    spec:
+      serviceAccountName: webhooker
+      initContainers:
+      - name: configure-git
+        image: alpine/git:latest
+        command: 
+          - /bin/sh
+          - -c
+          - cp /etc/git-secret/ssh /app/.ssh/id_rsa; chmod 400 /app/.ssh/*; ssh-keyscan bitbucket.org >> /app/.ssh/known_hosts; chown -R 1001 /app/.ssh;
+        volumeMounts:
+        - mountPath: /app/.ssh
+          name: ssh-volume
+        - mountPath: /etc/git-secret
+          name: git-secret
+      containers:
+      - name: webhooker
+        image: davimmt/webhooker:0.0.1
+        imagePullPolicy: Always
+        env:
+          - name: GIT_REPOS_TO_CLONE
+            value: "git@bitbucket.org:example/pipeline"
+          - name: GIT_ROOT_FOLDER
+            value: /app/git
+          - name: PIPELINE_SCRIPT_PATH
+            value: pipeline/pipe.sh
+        volumeMounts:
+        - mountPath: /app/.ssh
+          name: ssh-volume
+          readOnly: false
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 512m
+            memory: 256Mi
+          requests:
+            cpu: 512m
+            memory: 256Mi
+        securityContext:
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1001
+      volumes:
+      - name: ssh-volume
+        emptyDir: {}
+      - name: git-secret
+        secret:
+          secretName: argocd-k8s-ssh-key
+          defaultMode: 256
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webhooker
+  namespace: argocd
+  labels:
+    application: webhooker
+    component: webserver
+spec:
+  selector:
+    application: webhooker
+    component: webserver
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 8080
+  - name: https
+    port: 443
+    protocol: TCP
+    targetPort: 8080
