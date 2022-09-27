@@ -1,11 +1,12 @@
 #!/bin/bash
 
+EVENT_TYPE=$1
+BRANCH=$2
+NEW_COMMIT_HASH=$3
+OLD_COMMIT_HASH=$4
+
 mkdir -p "$GIT_ROOT_FOLDER"
 cd "$GIT_ROOT_FOLDER"
-
-BRANCH=$1
-NEW_COMMIT_HASH=$2
-OLD_COMMIT_HASH=$3
 
 git config --global core.compression 0
 
@@ -16,7 +17,7 @@ runPipe() {
     git clone --depth 1 "$git_repo" "$GIT_ROOT_FOLDER/$repo_name";
   done
 
-  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' '"$BRANCH"' '"$NEW_COMMIT_HASH"' '"$OLD_COMMIT_HASH"''
+  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' '"$EVENT_TYPE"' '"$BRANCH"' '"$NEW_COMMIT_HASH"' '"$OLD_COMMIT_HASH"''
   rm -f $1
 }
 
