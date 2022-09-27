@@ -40,6 +40,24 @@ type BitbucketPullRequestFulfilled struct {
 	} `json:"repository"`
 }
 
+type BitbucketPullRequestCreatedOrUpdated struct {
+	Pullrequest struct {
+		Destination struct {
+			Branch struct {
+				Name string `json:"name"`
+			} `json:"branch"`
+			Commit struct {
+				Hash string `json:"hash"`
+			} `json:"commit"`
+		} `json:"destination"`
+		Source struct {
+			Commit struct {
+				Hash string `json:"hash"`
+			} `json:"commit"`
+		} `json:"source"`
+	} `json:"pullrequest"`
+}
+
 func bitbucket(w http.ResponseWriter, r *http.Request) {
 	// Get required headers
 	required_headers := map[string]string{
@@ -78,13 +96,9 @@ func bitbucket(w http.ResponseWriter, r *http.Request) {
 	case "pullrequest:fulfilled":
 		commit_info = bitbucketPullRequestFulfilled(w, b)
 	case "pullrequest:created":
-		w.WriteHeader(500)
-		w.Write([]byte("Not yet implemented"))
-		return
+		commit_info = bitbucketPullRequestCreatedOrUpdated(w, b)
 	case "pullrequest:updated":
-		w.WriteHeader(500)
-		w.Write([]byte("Not yet implemented"))
-		return
+		commit_info = bitbucketPullRequestCreatedOrUpdated(w, b)
 	default:
 		w.WriteHeader(500)
 		w.Write([]byte("Not yet implemented"))
@@ -135,5 +149,19 @@ func bitbucketPullRequestFulfilled(w http.ResponseWriter, b []byte) map[string]s
 		"branch":          payload.Repository.Destination.Branch.Name,
 		"new_commit_hash": payload.Repository.MergeCommit.Hash,
 		"old_commit_hash": payload.Repository.Destination.Commit.Hash,
+	}
+}
+
+func bitbucketPullRequestCreatedOrUpdated(w http.ResponseWriter, b []byte) map[string]string {
+	var payload BitbucketPullRequestCreatedOrUpdated
+	err := json.Unmarshal(b, &payload)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+	}
+
+	return map[string]string{
+		"branch":          payload.Pullrequest.Destination.Branch.Name,
+		"new_commit_hash": payload.Pullrequest.Source.Commit.Hash,
+		"old_commit_hash": payload.Pullrequest.Destination.Commit.Hash,
 	}
 }
