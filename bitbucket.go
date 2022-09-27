@@ -24,8 +24,8 @@ type BitbucketRepoPush struct {
 	} `json:"push"`
 }
 
-type BitbucketPullRequestFulfilled struct {
-	Repository struct {
+type BitbucketPullRequest struct {
+	Pullrequest struct {
 		MergeCommit struct {
 			Hash string `json:"hash"`
 		} `json:"merge_commit"`
@@ -37,20 +37,10 @@ type BitbucketPullRequestFulfilled struct {
 				Hash string `json:"hash"`
 			} `json:"commit"`
 		} `json:"destination"`
-	} `json:"repository"`
-}
-
-type BitbucketPullRequestCreatedOrUpdated struct {
-	Pullrequest struct {
-		Destination struct {
+		Source struct {
 			Branch struct {
 				Name string `json:"name"`
 			} `json:"branch"`
-			Commit struct {
-				Hash string `json:"hash"`
-			} `json:"commit"`
-		} `json:"destination"`
-		Source struct {
 			Commit struct {
 				Hash string `json:"hash"`
 			} `json:"commit"`
@@ -132,36 +122,39 @@ func bitbucketRepoPush(w http.ResponseWriter, b []byte) map[string]string {
 	}
 
 	return map[string]string{
-		"branch":          payload.Push.Changes[0].New.Name,
-		"new_commit_hash": payload.Push.Changes[0].New.Target.Hash,
-		"old_commit_hash": payload.Push.Changes[0].Old.Target.Hash,
+		"destination_branch": payload.Push.Changes[0].New.Name,
+		"new_commit_hash":    payload.Push.Changes[0].New.Target.Hash,
+		"old_commit_hash":    payload.Push.Changes[0].Old.Target.Hash,
+		"source_branch":      payload.Push.Changes[0].New.Name,
 	}
 }
 
 func bitbucketPullRequestFulfilled(w http.ResponseWriter, b []byte) map[string]string {
-	var payload BitbucketPullRequestFulfilled
+	var payload BitbucketPullRequest
 	err := json.Unmarshal(b, &payload)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 	}
 
 	return map[string]string{
-		"branch":          payload.Repository.Destination.Branch.Name,
-		"new_commit_hash": payload.Repository.MergeCommit.Hash,
-		"old_commit_hash": payload.Repository.Destination.Commit.Hash,
+		"destination_branch": payload.Pullrequest.Destination.Branch.Name,
+		"new_commit_hash":    payload.Pullrequest.MergeCommit.Hash,
+		"old_commit_hash":    payload.Pullrequest.Destination.Commit.Hash,
+		"source_branch":      payload.Pullrequest.Destination.Branch.Name,
 	}
 }
 
 func bitbucketPullRequestCreatedOrUpdated(w http.ResponseWriter, b []byte) map[string]string {
-	var payload BitbucketPullRequestCreatedOrUpdated
+	var payload BitbucketPullRequest
 	err := json.Unmarshal(b, &payload)
 	if err != nil {
 		http.Error(w, err.Error(), 500)
 	}
 
 	return map[string]string{
-		"branch":          payload.Pullrequest.Destination.Branch.Name,
-		"new_commit_hash": payload.Pullrequest.Source.Commit.Hash,
-		"old_commit_hash": payload.Pullrequest.Destination.Commit.Hash,
+		"destination_branch": payload.Pullrequest.Destination.Branch.Name,
+		"new_commit_hash":    payload.Pullrequest.Source.Commit.Hash,
+		"old_commit_hash":    payload.Pullrequest.Destination.Commit.Hash,
+		"source_branch":      payload.Pullrequest.Source.Branch.Name,
 	}
 }
