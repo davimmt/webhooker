@@ -25,7 +25,7 @@ type BitbucketRepoPush struct {
 }
 
 type BitbucketPullRequestFulfilled struct {
-	Pullrequest struct {
+	Repository struct {
 		MergeCommit struct {
 			Hash string `json:"hash"`
 		} `json:"merge_commit"`
@@ -37,7 +37,7 @@ type BitbucketPullRequestFulfilled struct {
 				Hash string `json:"hash"`
 			} `json:"commit"`
 		} `json:"destination"`
-	} `json:"pullrequest"`
+	} `json:"repository"`
 }
 
 func bitbucket(w http.ResponseWriter, r *http.Request) {
@@ -132,8 +132,8 @@ func bitbucketPullRequestFulfilled(w http.ResponseWriter, b []byte) map[string]s
 	}
 
 	return map[string]string{
-		"branch":          payload.Pullrequest.Destination.Branch.Name,
-		"new_commit_hash": payload.Pullrequest.MergeCommit.Hash,
-		"old_commit_hash": payload.Pullrequest.Destination.Commit.Hash,
+		"branch":          payload.Repository.Destination.Branch.Name,
+		"new_commit_hash": payload.Repository.MergeCommit.Hash,
+		"old_commit_hash": payload.Repository.Destination.Commit.Hash,
 	}
 }
