@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 )
@@ -17,7 +18,11 @@ type BitbucketRepoPush struct {
 			New struct {
 				Name   string `json:"name"`
 				Target struct {
-					Hash string `json:"hash"`
+					Hash    string `json:"hash"`
+					Message string `json:"message"`
+					Author  struct {
+						Raw string `json:"raw"`
+					} `json:"author"`
 				} `json:"target"`
 			} `json:"new"`
 		} `json:"changes"`
@@ -26,6 +31,7 @@ type BitbucketRepoPush struct {
 
 type BitbucketPullRequest struct {
 	Pullrequest struct {
+		Title       string `json:"title"`
 		MergeCommit struct {
 			Hash string `json:"hash"`
 		} `json:"merge_commit"`
@@ -83,15 +89,13 @@ func bitbucket(w http.ResponseWriter, r *http.Request) {
 	switch required_headers["event_type"] {
 	case "repo:push":
 		commit_info = bitbucketRepoPush(w, b)
-	case "pullrequest:fulfilled":
-		commit_info = bitbucketPullRequestFulfilled(w, b)
 	case "pullrequest:created":
 		commit_info = bitbucketPullRequestCreatedOrUpdated(w, b)
 	case "pullrequest:updated":
 		commit_info = bitbucketPullRequestCreatedOrUpdated(w, b)
 	default:
 		w.WriteHeader(500)
-		w.Write([]byte("Not yet implemented"))
+		w.Write([]byte("Event type not yet implemented"))
 		return
 	}
 
@@ -99,14 +103,21 @@ func bitbucket(w http.ResponseWriter, r *http.Request) {
 	for k := range commit_info {
 		if commit_info[k] == "" {
 			w.WriteHeader(http.StatusBadRequest)
-			w.Write([]byte("Wrong commit info"))
+			w.Write([]byte("Unsupported payload"))
 			return
 		}
 	}
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
-	execPipe(required_headers["event_type"], commit_info)
+	commit_info["event_type"] = required_headers["event_type"]
+
+	commit_info_json, err := json.Marshal(commit_info)
+	if err != nil {
+		fmt.Printf("Error: %s", err.Error())
+	}
+
+	execPipe(string(commit_info_json))
 }
 
 func bitbucketRepoPush(w http.ResponseWriter, b []byte) map[string]string {
@@ -118,7 +129,7 @@ func bitbucketRepoPush(w http.ResponseWriter, b []byte) map[string]string {
 
 	if len(payload.Push.Changes) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
-		w.Write([]byte("500 - Something bad happened!"))
+		w.Write([]byte("Unsupported payload"))
 	}
 
 	return map[string]string{
@@ -126,21 +137,8 @@ func bitbucketRepoPush(w http.ResponseWriter, b []byte) map[string]string {
 		"new_commit_hash":    payload.Push.Changes[0].New.Target.Hash,
 		"old_commit_hash":    payload.Push.Changes[0].Old.Target.Hash,
 		"source_branch":      payload.Push.Changes[0].New.Name,
-	}
-}
-
-func bitbucketPullRequestFulfilled(w http.ResponseWriter, b []byte) map[string]string {
-	var payload BitbucketPullRequest
-	err := json.Unmarshal(b, &payload)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
-	}
-
-	return map[string]string{
-		"destination_branch": payload.Pullrequest.Destination.Branch.Name,
-		"new_commit_hash":    payload.Pullrequest.MergeCommit.Hash,
-		"old_commit_hash":    payload.Pullrequest.Destination.Commit.Hash,
-		"source_branch":      payload.Pullrequest.Destination.Branch.Name,
+		"message":            payload.Push.Changes[0].New.Target.Message,
+		"author":             payload.Push.Changes[0].New.Target.Author.Raw,
 	}
 }
 
@@ -156,5 +154,6 @@ func bitbucketPullRequestCreatedOrUpdated(w http.ResponseWriter, b []byte) map[s
 		"new_commit_hash":    payload.Pullrequest.Source.Commit.Hash,
 		"old_commit_hash":    payload.Pullrequest.Destination.Commit.Hash,
 		"source_branch":      payload.Pullrequest.Source.Branch.Name,
+		"message":            payload.Pullrequest.Title,
 	}
 }

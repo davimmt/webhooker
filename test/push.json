@@ -1,0 +1,23 @@
+{
+  "push": {
+    "changes": [
+      {
+        "old": {
+          "target": {
+            "hash": "old_commit_hash"
+          }
+        },
+        "new": {
+          "name": "main",
+          "target": {
+            "hash": "new_commit_hash",
+            "message": "commit_message",
+            "author": {
+              "raw": "Pretty Name <pretty.name@example.com>"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

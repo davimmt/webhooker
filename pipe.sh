@@ -1,11 +1,5 @@
 #!/bin/bash
 
-EVENT_TYPE=$1
-DESTINATION_BRANCH=$2
-NEW_COMMIT_HASH=$3
-OLD_COMMIT_HASH=$4
-SOURCE_BRANCH=$5
-
 mkdir -p "$GIT_ROOT_FOLDER"
 cd "$GIT_ROOT_FOLDER"
 
@@ -18,13 +12,7 @@ runPipe() {
     git clone --depth 1 "$git_repo" "$GIT_ROOT_FOLDER/$repo_name";
   done
 
-  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' \
-    '"$EVENT_TYPE"' \
-    '"$DESTINATION_BRANCH"' \
-    '"$NEW_COMMIT_HASH"' \
-    '"$OLD_COMMIT_HASH"' \
-    '"$SOURCE_BRANCH"'\
-  '
+  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' '$@''
   rm -f $1
 }
 
@@ -47,3 +35,4 @@ makeLock() {
 
 lock=$(makeLock)
 runPipe $lock
+exit 0

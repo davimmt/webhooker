@@ -1,0 +1,21 @@
+{
+  "pullrequest": {
+    "title": "message",
+    "destination": {
+      "branch": {
+        "name": "destination_branch_name"
+      },
+      "commit": {
+        "hash": "old_commit_hash"
+      }
+    },
+    "source": {
+      "branch": {
+        "name": "source_branch_name"
+      },
+      "commit": {
+        "hash": "new_commit_hash"
+      }
+    }
+  }
+}
