@@ -12,7 +12,7 @@ runPipe() {
     git clone --depth 1 "$git_repo" "$GIT_ROOT_FOLDER/$repo_name";
   done
 
-  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' '$@''
+  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' '"$@"''
   rm -f $1
 }
 
