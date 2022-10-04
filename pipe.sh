@@ -1,5 +1,7 @@
 #!/bin/bash
 
+PIPELINE_ARGS=$@
+
 mkdir -p "$GIT_ROOT_FOLDER"
 cd "$GIT_ROOT_FOLDER"
 
@@ -12,7 +14,7 @@ runPipe() {
     git clone --depth 1 "$git_repo" "$GIT_ROOT_FOLDER/$repo_name";
   done
 
-  /bin/bash -xe -c ''"$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH"' '"$@"''
+  "$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH" $PIPELINE_ARGS
   rm -f $1
 }
 
