@@ -15,7 +15,9 @@ runPipe() {
   done
 
   "$GIT_ROOT_FOLDER/$PIPELINE_SCRIPT_PATH" $PIPELINE_ARGS
-  rm -f $1
+  echo;
+  echo "Webhooker: Pipeline exited $?"
+  rm -f $1 && echo "Webhooker: Lock ($1) removed" || echo "Webhooker: Could not remove $1"
 }
 
 makeLock() {
@@ -37,4 +39,5 @@ makeLock() {
 
 lock=$(makeLock)
 runPipe $lock
+echo "Webhooker: End $?"
 exit 0

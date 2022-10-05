@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"strings"
 )
 
 type BitbucketRepoPush struct {
@@ -108,6 +110,35 @@ func bitbucket(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	COMMIT_MESSAGE_PREFIX_TO_IGNORE := os.Getenv("COMMIT_MESSAGE_PREFIX_TO_IGNORE")
+	COMMIT_AUTHOR_TO_IGNORE := os.Getenv("COMMIT_AUTHOR_TO_IGNORE")
+	PUSH_TRIGGER_ONLY_IF_BRANCHES := os.Getenv("PUSH_TRIGGER_ONLY_IF_BRANCHES")
+
+	if COMMIT_MESSAGE_PREFIX_TO_IGNORE != "" {
+		if strings.HasPrefix(commit_info["message"], COMMIT_MESSAGE_PREFIX_TO_IGNORE) {
+			w.WriteHeader(http.StatusAccepted)
+			w.Write([]byte("Accepted, but ignored"))
+			return
+		}
+	}
+
+	if COMMIT_AUTHOR_TO_IGNORE != "" {
+		if commit_info["author"] == COMMIT_AUTHOR_TO_IGNORE {
+			w.WriteHeader(http.StatusAccepted)
+			w.Write([]byte("Accepted, but ignored"))
+			return
+		}
+	}
+
+	if PUSH_TRIGGER_ONLY_IF_BRANCHES != "" {
+		if !stringInSlice(strings.Split(PUSH_TRIGGER_ONLY_IF_BRANCHES, ","), commit_info["destination_branch"]) {
+			w.WriteHeader(http.StatusAccepted)
+			w.Write([]byte("Accepted, but ignored"))
+			return
+		}
+	}
+
+	fmt.Println("\nWebhooker: Requested accepted, proceeding...")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 	commit_info["event_type"] = required_headers["event_type"]

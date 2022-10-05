@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webhooker
-  namespace: argocd
+  namespace: terraform
   labels:
     application: webhooker
     component: webserver
@@ -33,29 +33,37 @@ spec:
           name: git-secret
       containers:
       - name: webhooker
-        image: davimmt/webhooker:0.0.1
+        image: davimmt/webhooker:0.0.4
         imagePullPolicy: Always
         env:
           - name: GIT_REPOS_TO_CLONE
-            value: "git@bitbucket.org:example/pipeline"
+            value: "git@bitbucket.org:example/example"
           - name: GIT_ROOT_FOLDER
             value: /app/git
           - name: PIPELINE_SCRIPT_PATH
-            value: pipeline/pipe.sh
+            value: example/pipeline/pipe.sh
+          - name: COMMIT_MESSAGE_PREFIX_TO_IGNORE
+            value: "[X] "
+          - name: COMMIT_AUTHOR_TO_IGNORE
+            value: "Pipeline <devops@example.com.br>"
+          - name: PUSH_TRIGGER_ONLY_IF_BRANCHES
+            value: "main,master"
         volumeMounts:
         - mountPath: /app/.ssh
           name: ssh-volume
           readOnly: false
+        - name: tz-sp
+          mountPath: /etc/localtime
         ports:
         - containerPort: 8080
           protocol: TCP
         resources:
           limits:
             cpu: 512m
-            memory: 256Mi
+            memory: 1Gi
           requests:
             cpu: 512m
-            memory: 256Mi
+            memory: 512Mi
         securityContext:
           readOnlyRootFilesystem: false
           runAsNonRoot: true
@@ -65,14 +73,17 @@ spec:
         emptyDir: {}
       - name: git-secret
         secret:
-          secretName: argocd-k8s-ssh-key
+          secretName: bitbucket-ssh-key
           defaultMode: 256
+      - name: tz-sp
+        hostPath:
+          path: /usr/share/zoneinfo/America/Sao_Paulo
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: webhooker
-  namespace: argocd
+  namespace: terraform
   labels:
     application: webhooker
     component: webserver

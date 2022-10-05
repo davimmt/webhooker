@@ -8,6 +8,8 @@ import (
 
 func execPipe(commit_info string) {
 	go func() {
+		fmt.Println(commit_info)
+		fmt.Println()
 		cmd, err := exec.Command("./pipe.sh", commit_info).CombinedOutput()
 		fmt.Println(string(cmd))
 		if err != nil {
