@@ -1,6 +1,6 @@
 FROM bitnami/kubectl:1.20.9 as kubectl
 
-FROM golang:1.16-alpine
+FROM golang:1.18-alpine
 COPY --from=kubectl /opt/bitnami/kubectl/bin/kubectl /usr/local/bin/
 
 RUN apk add --update --no-cache \
@@ -29,6 +29,7 @@ COPY *.go ./
 COPY pipe.sh ./
 RUN chown -R webhooker /app
 
+RUN go get github.com/go-cmd/cmd
 RUN go mod download
 RUN go build -o /app/webhooker
 
