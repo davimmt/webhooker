@@ -32,10 +32,13 @@ RUN apk --no-cache add \
     && rm -rf /var/cache/apk/*
 
 # Install common packages
-RUN curl -sL https://github.com/stedolan/jq/releases/download/jq-1.6/jq-linux64 -o /usr/bin/jq && \
+ENV JQ_VERISION=1.6
+ENV YQ_VERISION=4.28.2
+
+RUN curl -sL https://github.com/stedolan/jq/releases/download/jq-${JQ_VERISION}/jq-linux64 -o /usr/bin/jq && \
     chmod +x /usr/bin/jq
 
-RUN curl -sL https://github.com/mikefarah/yq/releases/download/v4.2.0/yq_linux_amd64 -o /usr/bin/yq && \
+RUN curl -sL https://github.com/mikefarah/yq/releases/download/v${YQ_VERISION}/yq_linux_amd64 -o /usr/bin/yq && \
     chmod +x /usr/bin/yq
 
 RUN apk add --update --no-cache \
