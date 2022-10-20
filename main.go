@@ -10,6 +10,9 @@ import (
 
 func execPipe(commit_info string) {
 	go func() {
+		fmt.Println(commit_info)
+		fmt.Println()
+
 		// Disable output buffering, enable streaming
 		cmdOptions := cmd.Options{
 			Buffered:  false,
